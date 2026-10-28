@@ -1,0 +1,21 @@
+.wave-header {
+  position: relative;
+  height: var(--wave-header-height, clamp(520px, 85vh, 1000px));
+  overflow: hidden;
+  background: var(--wave-header-bg, #000);
+}
+
+.wave-header__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-y;   /* vertical scrolling still works on touch */
+}
+
+/* Optional: put your own content above the waves, and let the cursor pass through it. */
+.wave-header > :not(.wave-header__canvas) {
+  position: relative;
+  z-index: 1;
+}
