@@ -72,7 +72,7 @@ html, body { margin: 0; background: #000; }
     drift: 0.2,           // world units / second the terrain rolls toward the viewer
     swell: 0.15,          // travelling rolling-wave motion on top (0 = off)
     swellSpeed: 0.25,     // how fast those swells travel
-    height: 7.0,          // overall wave height
+    height: 4.0,          // overall wave height
     scale: 0.032,         // base noise frequency (smaller = broader hills)
 
     // cursor interaction (3D: sized in world space, so distant dots react smaller)
@@ -155,29 +155,31 @@ html, body { margin: 0; background: #000; }
       return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
     }
 
-    // Irregular terrain: domain-warped fractal noise, with a slow "mood" mask so
-    // some regions get tall, sharp crests and others stay calm. It rolls toward
-    // the viewer (drift) while it slowly morphs (time axis of the noise).
+    // Fabric-like terrain: smooth, rounded folds. Two low-frequency noise octaves give
+    // the broad billows, and a gently warped sine adds long soft drapes running
+    // diagonally, like cloth hanging in the wind. No sharp crests. A slow "mood" mask
+    // keeps the fold height uneven. It rolls toward the viewer (drift) while it slowly
+    // morphs (time axis of the noise).
     float height(vec2 p, float t) {
       vec2 q = p + uSeed;
       q.y += uNow * uDrift;
-      vec2 w = vec2(snoise(vec3(q * 0.04, t * 0.10)),
-                    snoise(vec3(q * 0.04 + 17.0, t * 0.10)));
-      q += w * 5.0;
+      vec2 w = vec2(snoise(vec3(q * 0.03, t * 0.10)),
+                    snoise(vec3(q * 0.03 + 17.0, t * 0.10)));
+      q += w * 7.0;
 
-      float n = 0.0, a = 1.0, f = uScale;
-      for (int i = 0; i < 4; i++) {
-        n += a * snoise(vec3(q * f, t * 0.16 + float(i) * 3.1));
-        a *= 0.42;
-        f *= 2.1;
-      }
-      n *= 0.85;
+      float n = snoise(vec3(q * uScale, t * 0.16))
+              + 0.28 * snoise(vec3(q * uScale * 2.0, t * 0.16 + 3.1));
+      n *= 0.8;
 
-      float mood = 0.5 + 0.5 * snoise(vec3(q * 0.016 + 40.0, t * 0.05));
-      float amp = 0.30 + 1.6 * mood * mood;
+      // long soft drapes: a sine across a slanted axis, bent by the warp so no fold is straight
+      float axis = dot(q, vec2(0.80, 0.60)) * uScale * 1.9 + 2.2 * w.x + 1.2 * w.y;
+      float fold = sin(axis + t * 0.25);
+      fold = fold * (1.0 - 0.18 * fold * fold); // flatten the peaks a touch
 
-      // asymmetric: pointier crests, broader troughs
-      float c = n > 0.0 ? n * (1.0 + 0.9 * n) : n * 0.75;
+      float mood = 0.5 + 0.5 * snoise(vec3(q * 0.014 + 40.0, t * 0.05));
+      float amp = 0.60 + 1.3 * mood * mood;
+
+      float c = n + 0.85 * fold;
       // broad swells rolling toward the viewer keep the whole surface visibly alive
       float swell = uSwell * sin(p.y * 0.13 - uNow * uSwellSpeed + p.x * 0.035 + 2.0 * w.x) * (0.4 + 0.6 * mood);
       return (c * amp + swell) * uHeight * (0.30 + 0.020 * p.y);
@@ -261,7 +263,7 @@ html, body { margin: 0; background: #000; }
 
       // --- colour gradient: far = deep, near = hot; crests glow, troughs sink
       float nearness = 1.0 - pow(depth, 0.55);
-      float hNorm = clamp(0.5 + h / (7.0 * localAmp), 0.0, 1.0);
+      float hNorm = clamp(0.5 + h / (uHeight * localAmp), 0.0, 1.0);
       float heat = smoothstep(0.05, 0.7, slope);
       float shade = 0.22 + 0.48 * nearness + 0.30 * hNorm + 0.25 * heat;
       float t = shade + 0.40 * lift;
