@@ -43,7 +43,7 @@
 
     // colours (any CSS hex). Dots are `color`, shaded darker with distance for depth;
     // they turn `hoverColor` only where the cursor lifts them.
-    color: '#d6dbe0',
+    color: '#b4babf',
     hoverColor: '#ff6a00',
   };
 
