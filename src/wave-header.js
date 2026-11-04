@@ -28,7 +28,7 @@
     focal: 0.62,          // focal length as a fraction of the canvas width
 
     // terrain
-    speed: 0.05,           // how fast the surface morphs
+    speed: 0.075,           // how fast the surface morphs
     drift: 0.1,           // world units / second the terrain rolls toward the viewer
     swell: 0.075,          // travelling rolling-wave motion on top (0 = off)
     swellSpeed: 0.125,     // how fast those swells travel
